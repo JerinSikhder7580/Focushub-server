@@ -106,18 +106,64 @@ async function run() {
 
         })
 
-        // booking api
 
-        app.post("/booking", async (req, res) => {
-            const booking = req.body
+        // update api
+        // const data = {
+        //     name: "jerin"
 
-            // check in this time is already booked
-            // conditionally res.send(result)
-            const result = await bookingCollection.insertOne(booking)
+        // }
+
+        // const query = { _id: ObjectId(nhlj) }
+
+
+
+        app.patch("/booking", async (req, res) => {
+            const updateData = req.body
+            console.log(updateData)
+            const query = { _id: new ObjectId(updateData.roomId) }
+            console.log(query)
+
+            const update = {
+                $set: updateData
+
+            }
+
+            const result = await roomsCollection.updateOne(query, update)
+            console.log(result)
+
             res.send(result)
 
 
         })
+
+
+        // booking api
+
+        app.post("/booking", async (req, res) => {
+            const booking = req.body
+            console.log(booking)
+
+            const query = {
+                date: booking.date
+            }
+            const bookedOnSameDate = await bookingCollection.find(query).toArray()
+            const sameTime = bookedOnSameDate.filter(booked => booked.startTime == booking.startTime)
+            if (sameTime[0]) {
+                res.status(409).json({ error: "Room is already booked on this schedule please choose another time or date" })
+                return
+
+            }
+            // check is this time already booked
+            // conditionally res.send(result)
+            const result = await bookingCollection.insertOne(booking)
+            console.log(result)
+            res.send(result)
+        })
+
+
+
+
+
 
 
 
