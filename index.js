@@ -22,6 +22,7 @@ async function run() {
         const focushubCollection = db.collection("focushub")
         const roomsCollection = db.collection("rooms")
         const userCollection = db.collection("user")
+        const bookingCollection = db.collection("booking")
 
         // ## body {data}
         // ## query api?nameOfQuery=valueOfQuery
@@ -101,6 +102,19 @@ async function run() {
             // email
             // query
             // return data
+
+
+        })
+
+        // booking api
+
+        app.post("/booking", async (req, res) => {
+            const booking = req.body
+
+            // check in this time is already booked
+            // conditionally res.send(result)
+            const result = await bookingCollection.insertOne(booking)
+            res.send(result)
 
 
         })
