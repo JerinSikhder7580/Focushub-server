@@ -93,10 +93,8 @@ async function run() {
            
 
             const result = await roomsCollection.find(query).toArray()
-            setTimeout(() => {
 
                 res.send(result)
-            }, 2000);
         })
         app.get("/room/:id", async (req, res) => {
             const { id } = req.params
