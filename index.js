@@ -88,9 +88,7 @@ async function run() {
                 query = { userEmail }
             }
 
-            // if (id) {
-            //     query = { _id: new ObjectId(id) }
-            // }
+           
 
             const result = await roomsCollection.find(query).toArray()
             setTimeout(() => {
