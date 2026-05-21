@@ -4,7 +4,7 @@ const dotenv = require("dotenv")
 
 const cors = require("cors")
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-const { createRemoteJWKSet, jwtVerify } = require("jose");
+// const { createRemoteJWKSet, jwtVerify } = require("jose");
 dotenv.config()
 
 
