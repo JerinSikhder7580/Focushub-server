@@ -2,19 +2,51 @@ const express = require("express")
 const dotenv = require("dotenv")
 const cors = require("cors")
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { createRemoteJWKSet, jwtVerify } = require("jose");
 dotenv.config()
-const app = express()
 
 
 const uri = process.env.MONGODB_URI;
 
 
+const app = express()
+const PORT = process.env.PORT
+
 app.use(cors())
 app.use(express.json())
-
-
-const PORT = process.env.PORT
 const client = new MongoClient(process.env.MONGODB_URI);
+
+
+const JWKS = createRemoteJWKSet(
+    new URL(`${process.env.CLIENT_URL}/api/auth/jwks`)
+)
+
+
+const verifyToken = async (req, res, next) => {
+    const authHeader = req?.headers.authorization
+    if (!authHeader) {
+        return res.status(401).json({ message: "Unauthorized" })
+    }
+    const token = authHeader.split(" ")[1]
+
+    if (!token) {
+        return res.status(401).json({ message: "Unauthorized" })
+
+    }
+
+    try {
+        const { payload } = await jwtVerify(token, JWKS)
+        next()
+    } catch (error) {
+        // next()
+        return res.status(403).json({ message: "Forbidden" })
+
+    }
+
+
+
+}
+
 async function run() {
     try {
         // await client.connect();
@@ -33,7 +65,7 @@ async function run() {
             const { roomName, amenities, min, max, userEmail } = req.query
             // const { id } = req.params
 
-            // console.log(roomName)
+
             let query = {}
             // if roomName exist
             if (roomName) {
@@ -60,7 +92,6 @@ async function run() {
             //     query = { _id: new ObjectId(id) }
             // }
 
-            // console.log(query)
             const result = await roomsCollection.find(query).toArray()
             setTimeout(() => {
 
@@ -69,9 +100,9 @@ async function run() {
         })
         app.get("/room/:id", async (req, res) => {
             const { id } = req.params
+            // const token = req.headers.authorization
             const query = { _id: new ObjectId(id) }
             const result = await roomsCollection.findOne(query)
-            // console.log(result)
             res.send(result)
         })
 
@@ -81,10 +112,24 @@ async function run() {
 
         app.post("/rooms", async (req, res) => {
             const roomData = req.body
-            // console.log(roomData)
             const result = await roomsCollection.insertOne(roomData)
-            // console.log(result)
             res.send(result)
+        })
+
+        // {_id: ObjectId('6a0c21647e4fed0551ccbfa6)}
+
+        app.delete("/room/:id", async (req, res) => {
+            const id = req.params
+
+            const query = { _id: new ObjectId(id.id) }
+            console.log(query)
+
+
+
+            const result = await roomsCollection.deleteOne(query)
+            // { deletedCount: 1 }
+            res.send(result)
+
         })
 
         // user api
@@ -93,10 +138,8 @@ async function run() {
         app.get("/user", async (req, res) => {
 
             const { email } = req.query
-            console.log(email)
             const query = { email }
             const result = await userCollection.findOne(query)
-            console.log(result)
             res.send(result)
 
             // email
@@ -117,11 +160,27 @@ async function run() {
 
 
 
-        app.patch("/booking", async (req, res) => {
+
+
+
+        // booking api
+
+        app.get('/booking/:id', async (req, res) => {
+            const { id } = req.params
+            const query = { userId: id }
+            console.log(query)
+            const result = await bookingCollection.find(query).toArray()
+            console.log(result)
+            res.send(result)
+        })
+
+
+        app.patch("/booking", verifyToken, async (req, res) => {
             const updateData = req.body
             console.log(updateData)
+
             const query = { _id: new ObjectId(updateData.roomId) }
-            console.log(query)
+
 
             const update = {
                 $set: updateData
@@ -129,19 +188,15 @@ async function run() {
             }
 
             const result = await roomsCollection.updateOne(query, update)
-            console.log(result)
+
 
             res.send(result)
 
 
         })
 
-
-        // booking api
-
-        app.post("/booking", async (req, res) => {
+        app.post("/booking", verifyToken, async (req, res) => {
             const booking = req.body
-            console.log(booking)
 
             const query = {
                 date: booking.date
@@ -156,12 +211,15 @@ async function run() {
             // check is this time already booked
             // conditionally res.send(result)
             const result = await bookingCollection.insertOne(booking)
-            console.log(result)
             res.send(result)
         })
 
 
-
+        app.delete("/booking/:id", async (req, res) => {
+            const { id } = req.params
+            const result = await bookingCollection.deleteOne({ _id: new ObjectId(id) })
+            res.send(result)
+        })
 
 
 
