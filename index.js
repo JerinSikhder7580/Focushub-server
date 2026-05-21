@@ -19,9 +19,11 @@ app.use(express.json())
 const client = new MongoClient(process.env.MONGODB_URI);
 
 
-const JWKS = createRemoteJWKSet(
-    new URL(`${process.env.CLIENT_URL}/api/auth/jwks`)
-)
+const JWKS = process.env.CLIENT_URL
+    ? createRemoteJWKSet(
+        new URL(`${process.env.CLIENT_URL}/api/auth/jwks`)
+    )
+    : null
 
 
 const verifyToken = async (req, res, next) => {
@@ -90,11 +92,11 @@ async function run() {
                 query = { userEmail }
             }
 
-           
+
 
             const result = await roomsCollection.find(query).toArray()
 
-                res.send(result)
+            res.send(result)
         })
         app.get("/room/:id", async (req, res) => {
             const { id } = req.params
@@ -140,7 +142,7 @@ async function run() {
             const result = await userCollection.findOne(query)
             res.send(result)
 
-            
+
 
         })
 
