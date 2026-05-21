@@ -59,7 +59,7 @@ const verifyToken = async (req, res, next) => {
 
 async function run() {
     try {
-        await client.connect();
+        // await client.connect();
         const db = await client.db("focushub")
         const focushubCollection = db.collection("focushub")
         const roomsCollection = db.collection("rooms")
@@ -232,7 +232,7 @@ app.get('/', async (req, res) => {
 })
 
 
-// app.listen(PORT, () => {
-//     console.log(`Server is running on port ${PORT}`)
-// })
-module.exports = app
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`)
+})
+// module.exports = app
