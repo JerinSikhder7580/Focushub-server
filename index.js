@@ -142,10 +142,7 @@ async function run() {
             const result = await userCollection.findOne(query)
             res.send(result)
 
-            // email
-            // query
-            // return data
-
+            
 
         })
 
