@@ -1,10 +1,10 @@
 const express = require("express")
 const dotenv = require("dotenv")
-
-
 const cors = require("cors")
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
+
+const { createRemoteJWKSet, jwtVerify } = require("jose");
+
 dotenv.config()
 
 
@@ -12,10 +12,11 @@ const uri = process.env.MONGODB_URI;
 
 
 const app = express()
-const PORT = process.env.PORT || 5000
+const PORT = process.env.PORT
 
 app.use(cors())
 app.use(express.json())
+
 const client = new MongoClient(uri, {
     serverApi: {
         version: ServerApiVersion.v1,
@@ -24,12 +25,8 @@ const client = new MongoClient(uri, {
     }
 });
 
+const JWKS = createRemoteJWKSet(new URL(`${process.env.CLIENT_URL}/api/auth/jwks`));
 
-const JWKS = process.env.CLIENT_URL
-    ? createRemoteJWKSet(
-        new URL(`${process.env.CLIENT_URL}/api/auth/jwks`)
-    )
-    : null
 
 
 const verifyToken = async (req, res, next) => {
@@ -70,13 +67,30 @@ async function run() {
         // ## query api?nameOfQuery=valueOfQuery
         // ## params api/${id}
 
+
+        // fetch("https//:localhost:5000/rooms?limit=6")
+        // .then(res=>res.json())
+        // .then(data=>{
+        //     setStat()
+        // })
+
+
         // rooms api
-        app.get("/rooms", async (req, res) => {
-            const { roomName, amenities, min, max, userEmail } = req.query
+        app.get("/rooms",  async (req, res) => {
+
+            // all data of room
+            // searching by roomName
+
+            // searching by amenities
+            // searching by  min / max cost
+            // filtering by userEmail
+
+            const { roomName, amenities, min, max, userEmail, limit } = req.query
             // const { id } = req.params
 
 
             let query = {}
+
             // if roomName exist
             if (roomName) {
                 query.roomName = { $regex: roomName, $options: "i" }
@@ -100,11 +114,15 @@ async function run() {
 
 
 
-            const result = await roomsCollection.find(query).toArray()
+            const result = await roomsCollection.find(query).limit(Number(limit) || 0).toArray()
 
             res.send(result)
         })
-        app.get("/room/:id", async (req, res) => {
+
+
+
+
+        app.get("/room/:id", verifyToken, async (req, res) => {
             const { id } = req.params
             // const token = req.headers.authorization
             const query = { _id: new ObjectId(id) }
@@ -116,15 +134,16 @@ async function run() {
 
 
 
-        app.post("/rooms", async (req, res) => {
+        app.post("/rooms", verifyToken, async (req, res) => {
             const roomData = req.body
+            console.log(roomData)
             const result = await roomsCollection.insertOne(roomData)
             res.send(result)
         })
 
         // {_id: ObjectId('6a0c21647e4fed0551ccbfa6)}
 
-        app.delete("/room/:id", async (req, res) => {
+        app.delete("/room/:id", verifyToken, async (req, res) => {
             const id = req.params
 
             const query = { _id: new ObjectId(id.id) }
@@ -141,7 +160,7 @@ async function run() {
         // user api
 
 
-        app.get("/user", async (req, res) => {
+        app.get("/user", verifyToken, async (req, res) => {
 
             const { email } = req.query
             const query = { email }
@@ -159,7 +178,7 @@ async function run() {
 
         // booking api
 
-        app.get('/booking/:id', async (req, res) => {
+        app.get('/booking/:id', verifyToken, async (req, res) => {
             const { id } = req.params
             const query = { userId: id }
             console.log(query)
@@ -209,7 +228,7 @@ async function run() {
         })
 
 
-        app.delete("/booking/:id", async (req, res) => {
+        app.delete("/booking/:id", verifyToken, async (req, res) => {
             const { id } = req.params
             const result = await bookingCollection.deleteOne({ _id: new ObjectId(id) })
             res.send(result)
