@@ -3,7 +3,7 @@ const dotenv = require("dotenv")
 const cors = require("cors")
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
-const { createRemoteJWKSet, jwtVerify } = require("jose");
+const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
 
 dotenv.config()
 
@@ -76,7 +76,7 @@ async function run() {
 
 
         // rooms api
-        app.get("/rooms",  async (req, res) => {
+        app.get("/rooms", async (req, res) => {
 
             // all data of room
             // searching by roomName
